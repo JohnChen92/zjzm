@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.chzm.dao.role.RoleDao" >
+
+  <insert id="insert" parameterType="com.chzm.model.user.User" >
+      insert into user_have_roles (user_id,play_role_id,status)
+      select u.id,p.id,'EFFECT'
+      from user u,play_role p
+      where u.open_id =#{openId}
+        and p.player_role_name =#{role}
+  </insert>
+
+    <update id="updateUserHaveRolesById" >
+        update user_have_roles set status=#{status}
+        where id=#{id}
+    </update>
+
+
+    <resultMap type="com.chzm.model.role.SortRoles" id="sortMapping">
+        <result column="sort" property="sort" />
+        <collection property="groupRoles" javaType="ArrayList" ofType="com.chzm.model.role.GroupRoles">
+            <result column="group" property="group"/>
+            <collection property="roles" resultMap="roleMapping">
+            </collection>
+        </collection>
+    </resultMap>
+
+    <resultMap id="roleMapping" type="com.chzm.model.role.PlayRoleGroup">
+        <result column="name" property="name"/>
+        <result column="checked" property="checked"/>
+    </resultMap>
+
+
+  <select id="queryRoles" resultMap="sortMapping" >
+      SELECT t.sort,t.group,t.NAME
+              ,case when t2.play_role_id is not null
+                        then true
+                    else false end checked
+      FROM (
+               SELECT
+                   id,
+                   '破招' sort,
+                   broken_strokes 'group',
+                   player_role_name NAME,
+                   'false' checked
+               FROM play_role
+               UNION ALL
+               SELECT id,'门派' sort,
+                      role_sect 'group',
+                      player_role_name NAME,
+                      'false' checked
+               FROM play_role
+           ) t
+      left join (
+              select uhr.play_role_id from
+                  user_have_roles uhr
+                      left join user u on uhr.user_id = u.id
+              where u.open_id = #{openId}
+                and  uhr.status = 'EFFECT'
+      )t2
+      on t.id = t2.play_role_id
+  </select>
+
+
+    <select id="queryUserHaveRoles" resultType="com.chzm.model.role.UserHaveRoles" >
+        select uhr.id ,uhr.user_id userId,uhr.play_role_id playRoleId,uhr.status
+        from user_have_roles uhr
+                 join user u on uhr.user_id = u.id
+                 join play_role p on p.id = uhr.play_role_id
+        where u.open_id = #{openId}
+          and p.player_role_name = #{role}
+    </select>
+
+    <select id="queryUserPlayRoles" resultType="com.chzm.model.role.UserHaveRoles" >
+        select uhr.id ,uhr.user_id userId,uhr.play_role_id  playRoleId, uhr.status,p.player_role_name playRoleName
+        from user_have_roles uhr
+         join user u on uhr.user_id = u.id
+         join play_role p on p.id = uhr.play_role_id
+        where u.open_id = #{openId}
+        and uhr.status = 'EFFECT'
+    </select>
+
+
+</mapper>

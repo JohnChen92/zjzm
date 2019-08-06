@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.chzm.dao.activity.ActivityDao" >
+
+  <select id="queryActivityDetail" resultType="com.chzm.model.avtivity.ActivityDetail" parameterType="com.chzm.param.ActivityQueryParam" >
+    select t.id ,i.activity_name activityName,u.nick_name nickName,i.fighting_number fightingNumber,t.start_time startTime,t.remark
+    from activity_detail t
+           join user u on t.create_user_id = u.id
+           join activity_info i on t.activity_info_id = i.id
+    where 1=1
+    and t.status!="DEL"
+<!--<if test="param. != null " >
+    </if>-->
+    order by t.create_time
+    LIMIT 0,10;
+  </select>
+
+    <select id="queryActivityInfo" resultType="com.chzm.model.avtivity.ActivityInfo" parameterType="com.chzm.param.ActivityQueryParam">
+        select t.id ,t.activity_name activityName,t.fighting_number fightingNumber,t.count,t.picture_url pictureUrl
+        from activity_info t
+        where 1=1
+        order by t.create_time
+    </select>
+
+    <insert id="creatActivity">
+        insert into activity_detail (
+            activity_info_id,create_user_id,create_user_name,start_time,end_time,remark,status,create_time)
+        select a.id ,u.id ,u.nick_name,#{startTime},null ,null,'init',now()
+        from activity_info a,user u
+        where u.open_id =#{openId}
+          and a.id =#{activityId}
+    </insert>
+
+    <update id="delActivity" parameterType="String">
+        update activity_detail
+        set status = 'DEL'
+        where id=#{id}
+    </update>
+
+    <select id="queryActivityDetailById" resultType="com.chzm.model.avtivity.ActivityDetail" parameterType="String" >
+        select t.id ,i.activity_name activityName,u.nick_name nickName,t.create_user_id createUserId,i.fighting_number fightingNumber,t.start_time startTime,t.remark
+        from activity_detail t
+                 join user u on t.create_user_id = u.id
+                 join activity_info i on t.activity_info_id = i.id
+        where 1=1
+        and t.id = #{id}
+    </select>
+
+
+
+    <select id="queryActivityJoinDetail" resultType="com.chzm.model.avtivity.ActivityJoinDetail" parameterType="String">
+        select t.id,
+               t.activity_detail_id activityDetailId,
+               i.activity_name activityName,
+               t.join_user_id joinUserId,
+               u.nick_name joinUserName,
+               t.join_play_role_id joinPlayRoleId,
+               r.player_role_name joinPlayRoleName,
+               r.picture_url pictureUrl
+        from activity_join_detail t
+         join activity_detail d on t.activity_detail_id = d.id
+         join activity_info i on d.activity_info_id = i.id
+         join user u on t.join_user_id = u.id
+         join play_role r on t.join_play_role_id = r.id
+        where t.activity_detail_id = #{activityDetailId}
+        and t.status!="DEL"
+    </select>
+
+    <select id="queryActivityJoinDetailById" resultType="com.chzm.model.avtivity.ActivityJoinDetail" parameterType="String">
+        select t.id,
+               t.activity_detail_id activityDetailId,
+               t.join_user_id joinUserId,
+               t.join_play_role_id joinPlayRoleId
+        from activity_join_detail t
+        where t.id = #{id}
+    </select>
+
+
+    <select id="checkActivityJoin" resultType="com.chzm.model.avtivity.ActivityJoinDetail" parameterType="String">
+        select t.id,t.activity_detail_id activityDetailId
+        from activity_join_detail t
+        join user u on u.id = t.join_user_id
+        where t.activity_detail_id =#{activityDetailId}
+          and u.open_id = #{openId}
+          and t.status!="DEL"
+    </select>
+
+
+    <insert id="joinActivity">
+        insert into activity_join_detail (activity_detail_id,join_user_id,join_play_role_id,status,create_time)
+        select #{activityId},u.id,#{playRoleId},'INIT',now()
+        from user u
+        where u.open_id = #{openId}
+    </insert>
+
+
+    <update id="quitActivity" parameterType="String">
+        update `activity_join_detail` set status = 'DEL' , update_time = now()
+        where 1=1
+        <if test="#{openId} != null and #{openId} != '' ">
+            and  join_user_id = (
+            select id from user where open_id = #{openId}
+            )
+        </if>
+        and id = #{activityId}
+ <!--  and activity_detail_id = #{} -->
+    </update>
+
+    <select id="queryPlayRoles" resultType="com.chzm.model.avtivity.PlayRole" parameterType="com.chzm.param.ActivityQueryParam">
+        select t.id,t.player_role_name playerRoleName,t.broken_strokes brokenStrokes
+        from play_role t
+        <if test="#{openId} != null and #{openId} != '' ">
+        join user_have_roles uhr on t.id = uhr.play_role_id and uhr.status = 'EFFECT'
+        join user u on u.id = uhr.user_id and u.open_id = #{openId}
+        </if>
+        where 1=1
+        and t.status!="DEL"
+
+    </select>
+</mapper>

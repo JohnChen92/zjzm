@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.chzm.dao.user.UserDao" >
+
+  <insert id="insert" parameterType="com.chzm.model.user.User" >
+    insert into user ( open_id, nick_name,
+      sex,register_time,
+      last_login_time, role,
+      auth_time, status,
+      auth_remark
+      )
+    values (#{openId,jdbcType=VARCHAR},
+        null,
+        null,  now(),
+        null, null,
+        null, null,
+        null
+      )
+  </insert>
+
+  <select id="queryUser" resultType="com.chzm.model.user.User" >
+    select id,
+           open_id openId,
+           nick_name nickName,
+           area,
+           sex,
+           register_time registerTime,
+           last_login_time lastLoginTime,
+           role,
+           auth_time authTime,
+           status,
+           auth_remark authRemark
+    from user
+    where open_id = #{openId}
+  </select>
+
+  <update id="updateByOpenId" parameterType="com.chzm.model.user.User" >
+    update user set auth_time=now(),status='SUCCESS'
+      <if test="nickName != null and nickName != '' ">
+          ,nick_name=#{nickName}
+      </if>
+      <if test="area != null and area != '' ">
+          ,area=#{area}
+      </if>
+    where open_id=#{openId}
+  </update>
+</mapper>
