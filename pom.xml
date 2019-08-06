@@ -116,7 +116,6 @@
 			<artifactId>byte-buddy-agent</artifactId>
 			<version>1.9.5</version>
 		</dependency>
-
     </dependencies>
     
     <!-- 编译  -->
